@@ -18,7 +18,7 @@ class VideoCategorizer(QMainWindow):
         self.load_settings()
         
         # Set window title with version info
-        self.setWindowTitle("Video Categorizer - Version 07b, Developed by David Hofmann")
+        self.setWindowTitle("Video Categorizer - V1.0, Developed by David Hofmann")
         
         # VLC setup
         self.vlc_instance = None
@@ -355,14 +355,32 @@ class VideoCategorizer(QMainWindow):
         self.primary_group.setVisible(True)
         self.carnivorous_group.setVisible(False)
         self.status_label.setText("Select primary category")
-    
     def init_vlc(self):
-        """Initialize VLC player"""
+        """Initialize VLC player with automatic library discovery"""
         if not self.vlc_instance:
             try:
-                self.vlc_instance = vlc.Instance()
+                # Try to find VLC installation automatically
+                vlc_args = []
+                
+                # On Windows, try common installation paths
+                if sys.platform == "win32":
+                    vlc_paths = [
+                        r'C:\Program Files\VideoLAN\VLC',
+                        r'C:\Program Files (x86)\VideoLAN\VLC',
+                        os.path.expanduser(r'~\AppData\Local\VideoLAN\VLC')
+                    ]
+                    
+                    # Add VLC directory to PATH if found
+                    for path in vlc_paths:
+                        if os.path.exists(path):
+                            os.environ['PATH'] = path + ';' + os.environ['PATH']
+                            break
+                
+                # Create VLC instance with platform-specific arguments
+                self.vlc_instance = vlc.Instance(vlc_args)
                 self.player = self.vlc_instance.media_player_new()
                 
+                # Set video widget based on platform
                 if sys.platform.startswith('linux'):
                     self.player.set_xwindow(self.video_widget.winId())
                 elif sys.platform == "win32":
@@ -370,8 +388,14 @@ class VideoCategorizer(QMainWindow):
                 
                 self.update_video_filters()
                 return True
+                
             except Exception as e:
-                QMessageBox.critical(self, "VLC Error", f"Failed to initialize VLC: {str(e)}")
+                error_msg = (
+                    "Failed to initialize VLC. Please ensure VLC is installed.\n"
+                    f"Error details: {str(e)}\n\n"
+                    "Download VLC from: https://www.videolan.org/vlc/"
+                )
+                QMessageBox.critical(self, "VLC Error", error_msg)
                 return False
         return True
     

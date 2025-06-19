@@ -1,4 +1,4 @@
-('D:\\SwitchDrive\\01_Private\\Bibliothek\\Wissen\\Python-Scripts\\VideoCategorizer\\build\\VideoCategorizer\\PYZ-00.pyz',
+('D:\\SwitchDrive\\01_Private\\Bibliothek\\Wissen\\Python-Scripts\\video_categorizer\\build\\VideoCategorizer\\PYZ-00.pyz',
  [('PyQt5',
    'C:\\Users\\david\\miniforge3\\lib\\site-packages\\PyQt5\\__init__.py',
    'PYMODULE'),
