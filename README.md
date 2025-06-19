@@ -1,6 +1,6 @@
 # Video Categorizer
 
-![Application Screenshot](https://github.com/DavidDHofmann/video_categorizer/tree/main/CategorizerScreenshot.png)
+![Application Screenshot](CategorizerScreenshot.png)
 
 A specialized tool for organizing wildlife video footage into categories and subcategories, with particular focus on carnivorous species identification. The application provides keyboard shortcuts for efficient playback control and video classification.
 
