@@ -1,7 +1,4 @@
 # Video Categorizer
-
-![Application Screenshot](CategorizerScreenshot.png)
-
 A specialized tool for organizing wildlife video footage into categories and subcategories, with particular focus on carnivorous species identification. The application provides keyboard shortcuts for efficient playback control and video classification.
 
 ## Table of Contents
@@ -30,6 +27,8 @@ The Video Categorizer is designed to streamline the process of reviewing and org
 1. Launch the application (double-click VideoCategorizer.exe)
 2. Click "Select Video Folder" and choose your video directory
 3. Supported formats: MP4, MOV, AVI, MKV
+
+![Application Screenshot](CategorizerScreenshot.png)
 
 ## Playback Controls
 
