@@ -1,12 +1,18 @@
 import os
 import sys
 import time
+import ctypes
+
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QPushButton, QFileDialog, QLabel,
                             QSlider, QMessageBox, QSizePolicy, QGroupBox)
 from PyQt5.QtCore import Qt, QTimer, QSettings
 from PyQt5.QtGui import QKeyEvent
 import vlc
+
+# Workaround for PyInstaller
+if getattr(sys, 'frozen', False):
+    os.environ['PATH'] = sys._MEIPASS + os.pathsep + os.environ['PATH']
 
 # Fix for PyQt5 DLL loading
 os.environ['QT_PLUGIN_PATH'] = ''
@@ -355,49 +361,166 @@ class VideoCategorizer(QMainWindow):
         self.primary_group.setVisible(True)
         self.carnivorous_group.setVisible(False)
         self.status_label.setText("Select primary category")
+    
+    def find_vlc(self):
+        """Locate system-installed VLC without bundling"""
+        # Standard VLC installation paths
+        paths = [
+            r"C:\Program Files\VideoLAN\VLC",
+            r"C:\Program Files (x86)\VideoLAN\VLC",
+            os.path.expandvars(r"%PROGRAMFILES%\VideoLAN\VLC"),
+            os.path.expandvars(r"%PROGRAMFILES(x86)%\VideoLAN\VLC")
+        ]
+    
+        for path in paths:
+            dll_path = os.path.join(path, "libvlc.dll")
+            if os.path.exists(dll_path):
+                return path
+    
+        return None
+
     def init_vlc(self):
-        """Initialize VLC player with automatic library discovery"""
-        if not self.vlc_instance:
+        """Initialize using system VLC only"""
+        vlc_path = self.find_vlc()
+    
+        if not vlc_path:
+            QMessageBox.critical(
+                self, "VLC Not Found",
+                "VLC media player is required but not found.\n\n"
+                "Please install VLC from https://www.videolan.org/\n"
+                "and ensure it's installed in the default location."
+            )
+            return False
+
+        try:
+            # Add VLC to DLL search path
+            os.environ['PATH'] = vlc_path + os.pathsep + os.environ['PATH']
+        
+            # Initialize VLC
+            self.vlc_instance = vlc.Instance([f"--plugin-path={vlc_path}/plugins"])
+            self.player = self.vlc_instance.media_player_new()
+            return True
+        
+        except Exception as e:
+            QMessageBox.critical(
+                self, "VLC Error",
+                f"VLC found but failed to initialize:\n\n{str(e)}\n\n"
+                "Common solutions:\n"
+                "1. Reinstall VLC (same architecture as this app)\n"
+                "2. Restart after VLC installation\n"
+                "3. Install Visual C++ Redistributable"
+            )
+            return False
+
+    def find_vlc(self):
+        """Enhanced VLC locator that handles all edge cases"""
+        # Try these locations in order:
+        search_paths = []
+        
+        # 1. Check PyInstaller bundle location
+        if getattr(sys, 'frozen', False):
+            search_paths.append(os.path.join(sys._MEIPASS, "vlc"))
+            search_paths.append(os.path.dirname(sys.executable))
+        
+        # 2. Check standard VLC installation paths
+        search_paths.extend([
+            r"C:\Program Files\VideoLAN\VLC",
+            r"C:\Program Files (x86)\VideoLAN\VLC",
+            os.path.expandvars(r"%PROGRAMFILES%\VideoLAN\VLC"),
+            os.path.expandvars(r"%PROGRAMFILES(x86)%\VideoLAN\VLC")
+        ])
+        
+        # 3. Check environment variable
+        if "VLC_PATH" in os.environ:
+            search_paths.append(os.environ["VLC_PATH"])
+        
+        # Check each potential path
+        for path in search_paths:
             try:
-                # Try to find VLC installation automatically
-                vlc_args = []
+                if path and os.path.exists(os.path.join(path, "libvlc.dll")):
+                    # Verify dependencies can load
+                    ctypes.CDLL(os.path.join(path, "libvlc.dll"))
+                    return path
+            except Exception:
+                continue
                 
-                # On Windows, try common installation paths
-                if sys.platform == "win32":
-                    vlc_paths = [
-                        r'C:\Program Files\VideoLAN\VLC',
-                        r'C:\Program Files (x86)\VideoLAN\VLC',
-                        os.path.expanduser(r'~\AppData\Local\VideoLAN\VLC')
-                    ]
-                    
-                    # Add VLC directory to PATH if found
-                    for path in vlc_paths:
-                        if os.path.exists(path):
-                            os.environ['PATH'] = path + ';' + os.environ['PATH']
-                            break
-                
-                # Create VLC instance with platform-specific arguments
-                self.vlc_instance = vlc.Instance(vlc_args)
-                self.player = self.vlc_instance.media_player_new()
-                
-                # Set video widget based on platform
-                if sys.platform.startswith('linux'):
-                    self.player.set_xwindow(self.video_widget.winId())
-                elif sys.platform == "win32":
-                    self.player.set_hwnd(self.video_widget.winId())
-                
-                self.update_video_filters()
-                return True
-                
-            except Exception as e:
-                error_msg = (
-                    "Failed to initialize VLC. Please ensure VLC is installed.\n"
-                    f"Error details: {str(e)}\n\n"
-                    "Download VLC from: https://www.videolan.org/vlc/"
-                )
-                QMessageBox.critical(self, "VLC Error", error_msg)
-                return False
-        return True
+        return None
+
+    def init_vlc(self):
+        """Foolproof VLC initialization"""
+        vlc_path = self.find_vlc()
+    
+        if not vlc_path:
+            QMessageBox.critical(
+                None, "VLC Not Found",
+                "Could not locate VLC installation.\n\n"
+                "Please install VLC from videolan.org or\n"
+                "place these files next to the executable:\n"
+                "- libvlc.dll\n- libvlccore.dll\n- plugins folder"
+            )
+            return False
+
+        try:
+            # Force add to PATH
+            if sys.platform == "win32":
+                os.environ['PATH'] = vlc_path + os.pathsep + os.environ['PATH']
+                if hasattr(os, 'add_dll_directory'):  # Python 3.8+
+                    os.add_dll_directory(vlc_path)
+        
+            # Initialize with explicit paths
+            args = [
+                f"--plugin-path={os.path.join(vlc_path, 'plugins')}",
+                "--no-xlib"  # Important for Linux compatibility
+            ]
+            self.vlc_instance = vlc.Instance(args)
+            self.player = self.vlc_instance.media_player_new()
+            return True
+        
+        except Exception as e:
+            QMessageBox.critical(
+                None, "VLC Error",
+                f"Failed to initialize VLC at {vlc_path}:\n\n{str(e)}\n\n"
+                "This usually means:\n"
+                "1. Missing Visual C++ Redistributable\n"
+                "2. 32/64-bit architecture mismatch\n"
+                "3. Corrupt VLC installation"
+            )
+            return False
+    
+    def init_vlc(self):
+        """Initialize VLC player using the find_vlc() locator"""
+        vlc_path = self.find_vlc()
+    
+        if not vlc_path:
+            QMessageBox.critical(
+                self, "VLC Not Found",
+                "VLC media player is required but not found.\n\n"
+                "Please install VLC from https://www.videolan.org/\n"
+                "or place VLC files in application folder."
+            )
+            return False
+
+        try:
+            # Critical: Add VLC to DLL search path
+            if sys.platform == "win32":
+                os.environ['PATH'] = vlc_path + ';' + os.environ['PATH']
+        
+            # Initialize with plugin path
+            args = [f"--plugin-path={os.path.join(vlc_path, 'plugins')}"]
+            self.vlc_instance = vlc.Instance(args)
+            self.player = self.vlc_instance.media_player_new()
+            return True
+        
+        except Exception as e:
+            QMessageBox.critical(
+                self, "VLC Initialization Failed",
+                f"Found VLC at {vlc_path} but failed to initialize:\n\n{str(e)}\n\n"
+                "Possible solutions:\n"
+                "1. Reinstall VLC (matching 32/64-bit version)\n"
+                "2. Install Microsoft Visual C++ Redistributable\n"
+                "3. Restart your computer after VLC installation"
+            )
+            return False
     
     def update_video_filters(self):
         """Update video brightness/contrast filters"""
