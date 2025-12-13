@@ -175,7 +175,7 @@ class VideoCategorizer(QMainWindow):
         brightness_group.setLayout(brightness_layout)
         control_layout.addWidget(brightness_group)
 
-        # Primary Categories
+        # Primary Categories - REORDERED: Small Carnivores moved to end
         self.primary_group = QGroupBox("Primary Classification")
         primary_layout = QHBoxLayout()
 
@@ -198,6 +198,10 @@ class VideoCategorizer(QMainWindow):
         self.btn_people = QPushButton("People (4)")
         self.btn_people.clicked.connect(lambda: self.categorize_video("People"))
         primary_layout.addWidget(self.btn_people)
+
+        self.btn_small_carnivores = QPushButton("Small Carnivores (5)")
+        self.btn_small_carnivores.clicked.connect(self.enter_small_carnivores_mode)
+        primary_layout.addWidget(self.btn_small_carnivores)
 
         self.primary_group.setLayout(primary_layout)
 
@@ -284,13 +288,99 @@ class VideoCategorizer(QMainWindow):
         )
         row4.addWidget(self.btn_small_cat)
 
-        self.btn_back = QPushButton("Back to Primary (Esc)")
-        self.btn_back.clicked.connect(self.exit_carnivorous_mode)
-        row4.addWidget(self.btn_back)
+        self.btn_back_carnivorous = QPushButton("Back to Primary (Esc)")
+        self.btn_back_carnivorous.clicked.connect(self.exit_carnivorous_mode)
+        row4.addWidget(self.btn_back_carnivorous)
 
         carnivorous_layout.addLayout(row4)
         self.carnivorous_group.setLayout(carnivorous_layout)
         self.carnivorous_group.setVisible(False)
+
+        # Small Carnivores Subcategories (initially hidden) - NEW GROUP
+        self.small_carnivores_group = QGroupBox("Small Carnivores Species")
+        small_carnivores_layout = QVBoxLayout()
+
+        # Row 1
+        sc_row1 = QHBoxLayout()
+        self.btn_mongoose_sc = QPushButton("Mongoose (1)")
+        self.btn_mongoose_sc.clicked.connect(
+            lambda: self.categorize_small_carnivore("Mongoose")
+        )
+        sc_row1.addWidget(self.btn_mongoose_sc)
+
+        self.btn_serval = QPushButton("Serval (2)")
+        self.btn_serval.clicked.connect(
+            lambda: self.categorize_small_carnivore("Serval")
+        )
+        sc_row1.addWidget(self.btn_serval)
+
+        self.btn_caracal_sc = QPushButton("Caracal (3)")
+        self.btn_caracal_sc.clicked.connect(
+            lambda: self.categorize_small_carnivore("Caracal")
+        )
+        sc_row1.addWidget(self.btn_caracal_sc)
+
+        self.btn_wildcat = QPushButton("Wildcat (4)")
+        self.btn_wildcat.clicked.connect(
+            lambda: self.categorize_small_carnivore("Wildcat")
+        )
+        sc_row1.addWidget(self.btn_wildcat)
+        small_carnivores_layout.addLayout(sc_row1)
+
+        # Row 2
+        sc_row2 = QHBoxLayout()
+        self.btn_aardwolf = QPushButton("Aardwolf (5)")
+        self.btn_aardwolf.clicked.connect(
+            lambda: self.categorize_small_carnivore("Aardwolf")
+        )
+        sc_row2.addWidget(self.btn_aardwolf)
+
+        self.btn_polecat = QPushButton("Polecat (6)")
+        self.btn_polecat.clicked.connect(
+            lambda: self.categorize_small_carnivore("Polecat")
+        )
+        sc_row2.addWidget(self.btn_polecat)
+
+        self.btn_bat_eared_fox = QPushButton("Bat-eared Fox (7)")
+        self.btn_bat_eared_fox.clicked.connect(
+            lambda: self.categorize_small_carnivore("Bat_eared_Fox")
+        )
+        sc_row2.addWidget(self.btn_bat_eared_fox)
+
+        self.btn_cape_fox = QPushButton("Cape Fox (8)")
+        self.btn_cape_fox.clicked.connect(
+            lambda: self.categorize_small_carnivore("Cape_Fox")
+        )
+        sc_row2.addWidget(self.btn_cape_fox)
+        small_carnivores_layout.addLayout(sc_row2)
+
+        # Row 3 - FIXED: Equal width buttons
+        sc_row3 = QHBoxLayout()
+
+        # Genet button
+        self.btn_genet_sc = QPushButton("Genet (9)")
+        self.btn_genet_sc.clicked.connect(
+            lambda: self.categorize_small_carnivore("Genet")
+        )
+
+        # Unknown button
+        self.btn_unknown_sc = QPushButton("Unknown (U)")
+        self.btn_unknown_sc.clicked.connect(
+            lambda: self.categorize_small_carnivore("Unknown")
+        )
+
+        # Back button
+        self.btn_back_small_carnivores = QPushButton("Back to Primary (Esc)")
+        self.btn_back_small_carnivores.clicked.connect(self.exit_small_carnivores_mode)
+
+        # Add buttons with stretch factors for equal width
+        sc_row3.addWidget(self.btn_genet_sc, 1)  # Stretch factor of 1
+        sc_row3.addWidget(self.btn_unknown_sc, 1)  # Stretch factor of 1
+        sc_row3.addWidget(self.btn_back_small_carnivores, 1)  # Stretch factor of 1
+
+        small_carnivores_layout.addLayout(sc_row3)
+        self.small_carnivores_group.setLayout(small_carnivores_layout)
+        self.small_carnivores_group.setVisible(False)
 
         # Status label
         self.status_label = QLabel("No video loaded")
@@ -312,6 +402,7 @@ class VideoCategorizer(QMainWindow):
         layout.addLayout(control_layout)
         layout.addWidget(self.primary_group)
         layout.addWidget(self.carnivorous_group)
+        layout.addWidget(self.small_carnivores_group)
         layout.addWidget(self.status_label)
         layout.addWidget(self.undo_status_label)
         central_widget.setLayout(layout)
@@ -327,6 +418,7 @@ class VideoCategorizer(QMainWindow):
             self.btn_brightness_down,
             self.btn_brightness_up,
             self.btn_carnivorous,
+            self.btn_small_carnivores,
             self.btn_herbivorous,
             self.btn_not_animals,
             self.btn_people,
@@ -357,6 +449,7 @@ class VideoCategorizer(QMainWindow):
             self.btn_brightness_down,
             self.btn_brightness_up,
             self.btn_carnivorous,
+            self.btn_small_carnivores,
             self.btn_herbivorous,
             self.btn_not_animals,
             self.btn_people,
@@ -424,12 +517,13 @@ class VideoCategorizer(QMainWindow):
 
     def init_shortcuts(self):
         """Initialize keyboard shortcut mappings"""
-        # Primary stage shortcuts
+        # Primary stage shortcuts - REORDERED: 5 is now Small Carnivores
         self.primary_shortcuts = {
             Qt.Key_1: ("Carnivorous", "primary"),
             Qt.Key_2: ("Herbivorous", "primary"),
             Qt.Key_3: ("Not Animals", "primary"),
             Qt.Key_4: ("People", "primary"),
+            Qt.Key_5: ("Small Carnivores", "primary"),
             Qt.Key_0: "skip",
             Qt.Key_U: "undo",
             Qt.Key_Q: "quit",
@@ -471,18 +565,61 @@ class VideoCategorizer(QMainWindow):
             Qt.Key_K: "seek_forward",
         }
 
+        # Small Carnivores stage shortcuts - NEW
+        self.small_carnivores_shortcuts = {
+            Qt.Key_1: "Mongoose",
+            Qt.Key_2: "Serval",
+            Qt.Key_3: "Caracal",
+            Qt.Key_4: "Wildcat",
+            Qt.Key_5: "Aardwolf",
+            Qt.Key_6: "Polecat",
+            Qt.Key_7: "Bat_eared_Fox",
+            Qt.Key_8: "Cape_Fox",
+            Qt.Key_9: "Genet",
+            Qt.Key_U: "Unknown",
+            Qt.Key_Escape: "back",
+            Qt.Key_0: "skip",
+            Qt.Key_U: "undo",
+            Qt.Key_Q: "quit",
+            Qt.Key_P: "pause",
+            Qt.Key_F: "speed_down",
+            Qt.Key_J: "speed_up",
+            Qt.Key_G: "brightness_down",
+            Qt.Key_H: "brightness_up",
+            Qt.Key_D: "seek_back",
+            Qt.Key_K: "seek_forward",
+        }
+
     def enter_carnivorous_mode(self):
         """Switch to carnivorous subcategory mode"""
         self.current_stage = "carnivorous"
         self.primary_group.setVisible(False)
         self.carnivorous_group.setVisible(True)
+        self.small_carnivores_group.setVisible(False)
         self.status_label.setText("Select carnivorous species")
+
+    def enter_small_carnivores_mode(self):
+        """Switch to small carnivores subcategory mode - NEW METHOD"""
+        self.current_stage = "small_carnivores"
+        self.primary_group.setVisible(False)
+        self.carnivorous_group.setVisible(False)
+        self.small_carnivores_group.setVisible(True)
+        self.status_label.setText("Select small carnivore species")
 
     def exit_carnivorous_mode(self):
         """Return to primary categorization mode"""
         self.current_stage = "primary"
         self.primary_group.setVisible(True)
         self.carnivorous_group.setVisible(False)
+        self.small_carnivores_group.setVisible(False)
+        self.status_label.setText("Select primary category")
+
+    def exit_small_carnivores_mode(self):
+        """Return to primary categorization mode from small carnivores - NEW METHOD"""
+        self.current_stage = "primary"
+        self.primary_group.setVisible(True)
+        self.carnivorous_group.setVisible(False)
+        self.small_carnivores_group.setVisible(False)
         self.status_label.setText("Select primary category")
 
     def update_video_filters(self):
@@ -587,6 +724,7 @@ class VideoCategorizer(QMainWindow):
             self.current_stage = "primary"
             self.primary_group.setVisible(True)
             self.carnivorous_group.setVisible(False)
+            self.small_carnivores_group.setVisible(False)
             self.status_label.setText(
                 f"Playing: {os.path.basename(self.current_video)}"
             )
@@ -878,6 +1016,47 @@ class VideoCategorizer(QMainWindow):
             if os.path.exists(src):
                 self.play_video(self.current_index)
 
+    def categorize_small_carnivore(self, species):
+        """Move video to small carnivore species subfolder - NEW METHOD"""
+        if not self.current_video:
+            return
+
+        small_carnivores_folder = os.path.join(self.video_folder, "Small_Carnivores")
+        os.makedirs(small_carnivores_folder, exist_ok=True)
+
+        species_folder = os.path.join(small_carnivores_folder, species)
+        os.makedirs(species_folder, exist_ok=True)
+
+        src = os.path.join(self.video_folder, self.current_video)
+        dest = os.path.join(species_folder, self.current_video)
+
+        # Store move in history
+        move_info = {
+            "src": src,
+            "dest": dest,
+            "category": f"Small_Carnivores/{species}",
+            "timestamp": time.time(),
+            "small_carnivore_species": species,
+        }
+        self.add_to_undo_history(move_info)
+
+        self.player.stop()
+        time.sleep(0.3)
+
+        try:
+            os.rename(src, dest)
+            self.status_label.setText(f"Moved to Small_Carnivores/{species} folder")
+            self.skip_video()
+        except Exception as e:
+            self.status_label.setText(f"Error moving file: {str(e)}")
+            QMessageBox.warning(self, "Move Failed", f"Could not move file:\n{str(e)}")
+            # Remove failed move from history
+            if self.undo_history and self.undo_history[-1] == move_info:
+                self.undo_history.pop()
+                self.update_undo_ui()
+            if os.path.exists(src):
+                self.play_video(self.current_index)
+
     def update_ui(self):
         """Update progress bar and time display"""
         if self.player and self.player.get_media():
@@ -929,8 +1108,12 @@ class VideoCategorizer(QMainWindow):
 
         if self.current_stage == "primary":
             action = self.primary_shortcuts.get(event.key())
-        else:
+        elif self.current_stage == "carnivorous":
             action = self.carnivorous_shortcuts.get(event.key())
+        elif self.current_stage == "small_carnivores":
+            action = self.small_carnivores_shortcuts.get(event.key())
+        else:
+            action = None
 
         if action is None:
             return
@@ -939,10 +1122,15 @@ class VideoCategorizer(QMainWindow):
             category, stage = action
             if category == "Carnivorous":
                 self.enter_carnivorous_mode()
+            elif category == "Small Carnivores":
+                self.enter_small_carnivores_mode()
             else:
                 self.categorize_video(category)
         elif action == "back":
-            self.exit_carnivorous_mode()
+            if self.current_stage == "carnivorous":
+                self.exit_carnivorous_mode()
+            elif self.current_stage == "small_carnivores":
+                self.exit_small_carnivores_mode()
         elif action == "undo":
             self.undo_last_move()
         elif action == "skip":
@@ -964,6 +1152,19 @@ class VideoCategorizer(QMainWindow):
             "Small Cat",
         ]:
             self.categorize_carnivorous(action)
+        elif action in [
+            "Mongoose",
+            "Serval",
+            "Caracal",
+            "Wildcat",
+            "Aardwolf",
+            "Polecat",
+            "Bat_eared_Fox",
+            "Cape_Fox",
+            "Genet",
+            "Unknown",
+        ]:
+            self.categorize_small_carnivore(action)
         elif action == "pause":
             self.toggle_pause()
         elif action == "speed_up":
